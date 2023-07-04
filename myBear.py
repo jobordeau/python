@@ -39,3 +39,12 @@ class Iloc:
         else:
             return self.series.data[index]
 
+
+class DataFrame:
+    def __init__(self, data=None, columns=None):
+        if isinstance(data, list) and isinstance(data[0], Series):
+            self.data = {series.nom: series.data for series in data}
+        elif isinstance(data, list) and isinstance(columns, list):
+            self.data = {columns[i]: col_data for i, col_data in enumerate(data)}
+        else:
+            self.data = {}
