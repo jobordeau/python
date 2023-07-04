@@ -32,6 +32,7 @@ class Iloc:
 
     def __getitem__(self, index):
         if isinstance(index, slice):
-            return Series(self.series.data[index], self.series.name)
+            return Series(self.series.nom, self.series.data[index])
         else:
             return self.series.data[index]
+
