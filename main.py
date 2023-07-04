@@ -1,4 +1,4 @@
-import MyBear as mb
+import myBear as mb
 
 if __name__ == '__main__':
     # Implémentation de la classe
