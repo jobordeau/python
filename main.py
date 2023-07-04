@@ -7,7 +7,7 @@ if __name__ == '__main__':
 
     # Propriété iloc
     print(s.iloc[1])
-    print(s.iloc[0:2].data)
+    print(s.iloc[0:2])
 
     # Fonctions statistiques max, min, mean, std et count
     print(f"max: {s.max()}")
