@@ -1,5 +1,5 @@
 import myBear as mb
-
+import numpy as np
 if __name__ == '__main__':
     # Series
     # Implémentation de la classe
@@ -65,3 +65,23 @@ if __name__ == '__main__':
     # Columns
     dataframe = mb.DataFrame.read_json('columns.json', "columns")
     print(dataframe)
+
+    data1 = [
+        mb.Series("Animal", ["Dog", "Cat", "Dog", "Dog", "Cat", "Cat"]),
+        mb.Series("Color", ["Black", "White", "Black", "White", "White", "Black"]),
+        mb.Series("Weight", [25, 10, 30, 28, 11, 12]),
+        mb.Series("Age", [5, 2, 6, 3, 4, 2])
+    ]
+
+    data2 = [
+        mb.Series("Breed", ["Labrador", "Persian", "Bulldog", "Poodle", "Siamese", "Persian"]),
+        mb.Series("Color", ["Black", "White", "Black", "White", "White", "Black"]),
+        mb.Series("Popularity", [5, 3, 4, 2, 3, 5])
+    ]
+
+    df1 = mb.DataFrame(data1)
+    df2 = mb.DataFrame(data2)
+
+    # groupby example
+    grouped_df = df1.groupby(by=["Animal", "Color"], agg={"Weight": max, "Age": np.mean})
+    print(grouped_df)

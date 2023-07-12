@@ -1,6 +1,8 @@
 import statistics
 import csv
 import json
+from typing import List, Dict, Callable, Any, Union
+from collections import defaultdict
 
 
 class Series:
@@ -31,12 +33,34 @@ class Series:
     def count(self):
         return len(self.data)
 
-    def __str__(self):
-        toString = f"Etiquette: {self.nom} \n Donnée: {str(self.data)} \n Statistiques: \n ------------------- \n " \
-                   f"max: {self.max()} \n min: {self.min()} \n mean: {self.mean()} \n std: {self.std()} \n " \
-                   f"count: {self.count()} \n"
-        return toString
+    def describe(self):
+        stats = {
+            "max": self.max(),
+            "min": self.min(),
+            "mean": self.mean(),
+            "std": self.std(),
+            "count": self.count()
+        }
+        return stats
 
+    def __str__(self):
+        toString = f"Etiquette: {self.nom}\nDonnée: {str(self.data)}\n"
+
+        if isinstance(self.data[0], (int, float)):
+            # Handle numerical data
+            if self.describe():
+                stats = self.describe()
+                toString += "Statistiques:\n"
+                for stat, value in stats.items():
+                    toString += f"- {stat}: {value}\n"
+        else:
+            # Handle non-numerical data
+            unique_values = set(self.data)
+            num_unique = len(unique_values)
+            toString += f"Valeurs uniques: {', '.join(str(val) for val in unique_values)}\n"
+            toString += f"Nombre de valeurs uniques: {num_unique}\n"
+
+        return toString
 
 class IlocSeries:
     def __init__(self, series: Series):
@@ -61,6 +85,51 @@ class DataFrame:
                          enumerate(data)]  # pk on boucle sur data et pas sur columns?
         else:
             self.data = []
+
+    @classmethod
+    def from_records(cls, records: List[Dict[str, Any]]) -> 'DataFrame':
+        columns = {key: [] for key in records[0].keys()}  # Initialize empty lists for each column
+
+        for record in records:
+            for key, value in record.items():
+                columns[key].append(value)  # Append the value to the appropriate column
+
+        # Convert the columns dictionary to a list of Series
+        data = [Series(key, values) for key, values in columns.items()]
+
+        return cls(data)  # Return a new DataFrame instance
+
+    def groupby(self, by: Union[List[str], str], agg: Dict[str, Callable[[List[Any]], Any]]) -> 'DataFrame':
+        if isinstance(by, str):
+            by = [by]
+        agg_keys = list(agg.keys())
+
+        # Initialize a single defaultdict for the groups
+        groups = defaultdict(lambda: defaultdict(list))
+
+        data_dict = {key: serie.data for key, serie in self.data}  # Convert self.data to dictionary
+
+        for i in range(len(data_dict[by[0]])):
+            # Create a tuple for each row by combining all 'by' column values
+            by_vals = tuple(data_dict[by_key][i] for by_key in by)
+
+            # Append all non 'by' column values to the corresponding group
+            for key, serie in data_dict.items():
+                if key not in by:
+                    groups[by_vals][key].append(serie[i])
+
+        aggregated_data = []
+
+        # Perform the aggregation operations
+        for by_vals, agg_dict in groups.items():
+            for agg_key, agg_func in agg.items():
+                if agg_key in agg_dict:  # Only perform aggregation if the key is in the dict
+                    agg_dict[agg_key] = agg_func(agg_dict[agg_key])
+            # Add the 'by' values to the aggregated data
+            agg_dict.update({by[i]: by_val for i, by_val in enumerate(by_vals)})
+            aggregated_data.append(agg_dict)
+
+        return DataFrame.from_records(aggregated_data)
 
     @property
     def iloc(self):
@@ -112,9 +181,25 @@ class DataFrame:
 
     def __str__(self):
         toString = ""
-        for serie in self.data:  # data est une list de tuple, dans le tuple il n'ya que deux eleement genre le nom
-            # de la serie à l'index 0 et la serie elle meme à l'index 1
-            toString += f"{str(serie[1])} \n####################\n"
+        for serie in self.data:
+            toString += f"Column: {serie[0]}\nData: {str(serie[1].data)}\n"
+
+            if isinstance(serie[1].data[0], (int, float)):
+                # Handle numerical data
+                if serie[1].describe():
+                    stats = serie[1].describe()
+                    toString += "Statistics:\n"
+                    for stat, value in stats.items():
+                        toString += f"- {stat}: {value}\n"
+            else:
+                # Handle non-numerical data
+                unique_values = set(serie[1].data)
+                num_unique = len(unique_values)
+                toString += f"Unique values: {', '.join(str(val) for val in unique_values)}\n"
+                toString += f"Number of unique values: {num_unique}\n"
+
+            toString += "\n"
+
         return toString
 
 
