@@ -85,3 +85,16 @@ if __name__ == '__main__':
     # groupby example
     grouped_df = df1.groupby(by=["Animal", "Color"], agg={"Weight": max, "Age": np.mean})
     print(grouped_df)
+
+    df1 = mb.DataFrame.from_records([
+        {"id": 1, "nom": "John", "age": 30},
+        {"id": 2, "nom": "Jane", "age": 25},
+        {"id": 3, "nom": "Jack", "age": 35},
+    ])
+
+    # Création du second DataFrame
+    df2 = mb.DataFrame.from_records([
+        {"id": 1, "profession": "Ingénieur"},
+        {"id": 2, "profession": "Médecin"},
+        {"id": 4, "profession": "Artiste"},
+    ])

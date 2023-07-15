@@ -131,6 +131,62 @@ class DataFrame:
 
         return DataFrame.from_records(aggregated_data)
 
+
+    def join(
+            self,
+            other: 'DataFrame',
+            left_on: Union[List[str], str],
+            right_on: Union[List[str], str],
+            how: str = "left"
+    ) -> 'DataFrame':
+        if isinstance(left_on, str):
+            left_on = [left_on]
+
+        if isinstance(right_on, str):
+            right_on = [right_on]
+
+        left_data_dict = {key: serie.data for key, serie in self.data}  # Convert self.data to dictionary
+        right_data_dict = {key: serie.data for key, serie in other.data}  # Convert other.data to dictionary
+
+        left_rows = [
+            {key: left_data_dict[key][i] for key in left_data_dict.keys()}
+            for i in range(len(left_data_dict[left_on[0]]))
+        ]
+
+        right_rows = [
+            {key: right_data_dict[key][i] for key in right_data_dict.keys()}
+            for i in range(len(right_data_dict[right_on[0]]))
+        ]
+
+        # Perform join operation
+        joined_rows = []
+        for left_row in left_rows:
+            left_keys = tuple(left_row[key] for key in left_on)
+            for right_row in right_rows:
+                right_keys = tuple(right_row[key] for key in right_on)
+                if left_keys == right_keys:
+                    joined_row = {**left_row, **right_row}  # Merge two dictionaries
+                    joined_rows.append(joined_row)
+                    if how == 'left' or how == 'inner':
+                        break  # In case of left or inner join, stop after finding the first match
+            else:
+                if how == 'left' or how == 'outer':
+                    joined_rows.append(
+                        left_row)  # In case of left or outer join, add the left row even if no match was found
+
+        if how == 'right' or how == 'outer':
+            # In case of right or outer join, add all right rows that do not match any left row
+            for right_row in right_rows:
+                right_keys = tuple(right_row[key] for key in right_on)
+                for joined_row in joined_rows:
+                    joined_keys = tuple(joined_row[key] for key in left_on)
+                    if right_keys == joined_keys:
+                        break
+                else:
+                    joined_rows.append(right_row)
+
+        # Convert joined rows back to DataFrame
+        return DataFrame.from_records(joined_rows)
     @property
     def iloc(self):
         return IlocDataFrame(self)
